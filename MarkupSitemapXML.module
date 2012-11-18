@@ -11,7 +11,7 @@ class MarkupSitemapXML extends WireData implements Module {
 			'title' => 'Markup Sitemap XML', 
 			'summary' => 'Generates an XML sitemap at yoursite.com/sitemap.xml for use with Google Webmaster Tools etc.', 
 			'href' => 'http://processwire.com/talk/index.php/topic,867.0.html', 
-			'version' => 101, 
+			'version' => 103, 
 			'permanent' => false, 
 			'autoload' => true, 
 			'singular' => true, 
@@ -43,14 +43,16 @@ class MarkupSitemapXML extends WireData implements Module {
 	
 	public function sitemapListPage($page) {
 		$entry = "";
-		if ($page->sitemap_ignore == 0 || $page->path == '/') { // $page->path part added so that it ignores hiding the homepage, else you wouldn't have ANY pages returned
+		if ($page->viewable() && ($page->sitemap_ignore == 0 || $page->path == '/')) { // $page->path part added so that it ignores hiding the homepage, else you wouldn't have ANY pages returned
 			$modified = date ('Y-m-d', $page->modified);
 			$entry = "\n  <url>\n";
 			$entry .= "    <loc>{$page->httpUrl}</loc>\n";
 			$entry .= "    <lastmod>{$modified}</lastmod>\n";
 		  	$entry .= "  </url>";
 			if($page->numChildren) {
-				foreach($page->children as $child) $entry .= $this->sitemapListPage($child);
+				foreach($page->children as $child) {
+					$entry .= $this->sitemapListPage($child);
+				}
 			}
 		}
 		return $entry;
@@ -61,11 +63,13 @@ class MarkupSitemapXML extends WireData implements Module {
 	 *
 	 */
 	public function ___install() {
-
+		
 		if($this->fields->get('sitemap_ignore')) {
 			$this->error("You already have a 'sitemap_ignore' field."); 
 			return;
 		}
+		
+		wire('modules')->get('MarkupCache'); 
 		
 		$field = new Field();
 		$field->type = $this->modules->get("FieldtypeCheckbox");
