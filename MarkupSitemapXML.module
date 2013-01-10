@@ -38,7 +38,7 @@ class MarkupSitemapXML extends WireData implements Module {
 			}
 			// Check for the cached sitemap, else generate and cache a fresh sitemap
 			$cache =  wire('modules')->get("MarkupCache");
-			if(!$output = $cache->get("MarkupSitemapXML$lang", 120)) {
+			if(!$output = $cache->get("MarkupSitemapXML$lang", 3600)) {
 				$output = "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n";
 				$output .= '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">';
 				$output .= $this->sitemapListPage(wire('pages')->get("/"));
