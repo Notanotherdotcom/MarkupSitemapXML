@@ -8,13 +8,13 @@ class MarkupSitemapXML extends WireData implements Module {
 	 */
 	public static function getModuleInfo() {
 		return array(
-			'title' => 'Markup Sitemap XML', 
-			'summary' => 'Generates an XML sitemap at yoursite.com/sitemap.xml for use with Google Webmaster Tools etc.', 
-			'href' => 'http://processwire.com/talk/index.php/topic,867.0.html', 
-			'version' => 103, 
-			'permanent' => false, 
-			'autoload' => true, 
-			'singular' => true, 
+			'title' => 'Markup Sitemap XML',
+			'summary' => 'Generates an XML sitemap at yoursite.com/sitemap.xml for use with Google Webmaster Tools etc.',
+			'href' => 'http://processwire.com/talk/index.php/topic,867.0.html',
+			'version' => 104,
+			'permanent' => false,
+			'autoload' => true,
+			'singular' => true,
 			);
 	}
 
@@ -24,23 +24,31 @@ class MarkupSitemapXML extends WireData implements Module {
 	 */
 	public function init() {
 		// Intercept a request for a root URL ending in sitemap.xml and output
-		if (strpos($_SERVER['REQUEST_URI'], wire('config')->urls->root . 'sitemap.xml') !== FALSE) { 
+		if (strpos($_SERVER['REQUEST_URI'],  '/sitemap.xml') !== FALSE) {
+			$this->addHookAfter("Page::render",$this,"renderSitemap");
+		}
+	}
+
+	public function renderSitemap($event){
+			$event->replace = true;
+			$lang = '';
+			if(wire("modules")->isInstalled("LanguageLocalizedURL")) {
+				// get user language for cache name if
+				$lang = $this->user->language->name;
+			}
 			// Check for the cached sitemap, else generate and cache a fresh sitemap
-			$cache =  wire('modules')->get("MarkupCache"); 
-			if(!$output = $cache->get("MarkupSitemapXML", 3600)) {
+			$cache =  wire('modules')->get("MarkupCache");
+			if(!$output = $cache->get("MarkupSitemapXML$lang", 120)) {
 				$output = "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n";
 				$output .= '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">';
 				$output .= $this->sitemapListPage(wire('pages')->get("/"));
 				$output .= "\n</urlset>";
-				$cache->save($output); 
-			} 
-			
+				$cache->save($output);
+			}
 			header("Content-Type: text/xml");
-			echo $output;
-			exit;
-		}
+			$event->return = $output;
 	}
-	
+
 	public function sitemapListPage($page) {
 		$entry = "";
 		if ($page->viewable() && ($page->sitemap_ignore == 0 || $page->path == '/')) { // $page->path part added so that it ignores hiding the homepage, else you wouldn't have ANY pages returned
@@ -63,14 +71,14 @@ class MarkupSitemapXML extends WireData implements Module {
 	 *
 	 */
 	public function ___install() {
-		
+
 		if($this->fields->get('sitemap_ignore')) {
-			$this->error("You already have a 'sitemap_ignore' field."); 
+			$this->error("You already have a 'sitemap_ignore' field.");
 			return;
 		}
-		
-		wire('modules')->get('MarkupCache'); 
-		
+
+		wire('modules')->get('MarkupCache');
+
 		$field = new Field();
 		$field->type = $this->modules->get("FieldtypeCheckbox");
 		$field->name = 'sitemap_ignore';
@@ -78,7 +86,7 @@ class MarkupSitemapXML extends WireData implements Module {
 		$field->description = 'Hide this page and its children from the XML sitemap';
 		$field->save();
 
-		$this->message("Added field 'sitemap_ignore'. Add this field to any templates where you want to prevent inclusion in the XML sitemap."); 
+		$this->message("Added field 'sitemap_ignore'. Add this field to any templates where you want to prevent inclusion in the XML sitemap.");
 	}
 
 	/**
@@ -88,9 +96,9 @@ class MarkupSitemapXML extends WireData implements Module {
 	public function ___uninstall() {
 		// only do the following if you want to uninstall the fields that were installed
 		// this may be one thing that's safe to leave to the user
-		$field = wire('fields')->get('sitemap_ignore'); 
-		if($field && $field->numFieldgroups() > 0) 
-			throw new WireException("Can't uninstall because field sitemap_ignore is still being used. Please remove it from any templates."); 
-		wire('fields')->delete($field); 
+		$field = wire('fields')->get('sitemap_ignore');
+		if($field && $field->numFieldgroups() > 0)
+			throw new WireException("Can't uninstall because field sitemap_ignore is still being used. Please remove it from any templates.");
+		wire('fields')->delete($field);
 	}
 }
