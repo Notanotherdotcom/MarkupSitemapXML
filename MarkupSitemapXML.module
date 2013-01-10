@@ -11,7 +11,7 @@ class MarkupSitemapXML extends WireData implements Module {
 			'title' => 'Markup Sitemap XML',
 			'summary' => 'Generates an XML sitemap at yoursite.com/sitemap.xml for use with Google Webmaster Tools etc.',
 			'href' => 'http://processwire.com/talk/index.php/topic,867.0.html',
-			'version' => 104,
+			'version' => 105,
 			'permanent' => false,
 			'autoload' => true,
 			'singular' => true,
@@ -29,12 +29,22 @@ class MarkupSitemapXML extends WireData implements Module {
 		}
 	}
 
-	public function renderSitemap($event){
+	public function renderSitemap(HookEvent $event){
 			$event->replace = true;
 			$lang = '';
+			$this->pageselector = '';
+
+			// support for LanguageLocalizedURL language module
 			if(wire("modules")->isInstalled("LanguageLocalizedURL")) {
-				// get user language for cache name if
+				$llu = wire("modules")->get("LanguageLocalizedURL");
 				$lang = $this->user->language->name;
+				if($lang == 'default') $lang = $llu->defaultLang;
+				$langpage = $this->pages->get("/$lang/");
+				if(!$langpage->id) throw new WireException("No language page found. You're using LanguageLocalizedURL, make sure the default language name is correct or if the /langname/ gateway page exist.");
+				// get the field name for published language from the modules settings
+				$publishedfield_name = $llu->publishedPageField ? $llu->publishedPageField : 'language_published';
+				// add a selector to find children pages when generating sitemap list
+				$this->pageselector = "$publishedfield_name=$langpage->id";
 			}
 			// Check for the cached sitemap, else generate and cache a fresh sitemap
 			$cache =  wire('modules')->get("MarkupCache");
@@ -57,8 +67,9 @@ class MarkupSitemapXML extends WireData implements Module {
 			$entry .= "    <loc>{$page->httpUrl}</loc>\n";
 			$entry .= "    <lastmod>{$modified}</lastmod>\n";
 		  	$entry .= "  </url>";
-			if($page->numChildren) {
-				foreach($page->children as $child) {
+		  	$children = $page->children($this->pageselector);
+			if(count($children)) {
+				foreach($children as $child) {
 					$entry .= $this->sitemapListPage($child);
 				}
 			}
