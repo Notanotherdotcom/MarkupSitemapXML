@@ -11,7 +11,7 @@ class MarkupSitemapXML extends WireData implements Module {
 			'title' => 'Markup Sitemap XML',
 			'summary' => 'Generates an XML sitemap at yoursite.com/sitemap.xml for use with Google Webmaster Tools etc.',
 			'href' => 'http://processwire.com/talk/index.php/topic,867.0.html',
-			'version' => 104,
+			'version' => 105,
 			'permanent' => false,
 			'autoload' => true,
 			'singular' => true,
@@ -29,16 +29,27 @@ class MarkupSitemapXML extends WireData implements Module {
 		}
 	}
 
-	public function renderSitemap($event){
-			$event->replace = true;
+	public function renderSitemap(HookEvent $event){
+			//$event->replace = true;
 			$lang = '';
+			$this->pageselector = '';
+
+			// support for LanguageLocalizedURL language module
 			if(wire("modules")->isInstalled("LanguageLocalizedURL")) {
-				// get user language for cache name if
-				$lang = $this->user->language->name;
+				$llu = wire("modules")->get("LanguageLocalizedURL");
+				$langname = $this->page->name;
+				$lang = ($llu->defaultLang == $langname)  ? 'default' : $langname;
+				$langpage = $this->page;
+				// get the field name for published language from the modules settings
+				$publishedfield_name = $llu->publishedPageField ? $llu->publishedPageField : 'language_published';
+				// add a selector to find children pages when generating sitemap list
+				$this->pageselector = "$publishedfield_name=$langpage->id";
+				//set user language so the module will spit out language localized urls
+				$this->user->language = $this->languages->get($lang);
 			}
 			// Check for the cached sitemap, else generate and cache a fresh sitemap
 			$cache =  wire('modules')->get("MarkupCache");
-			if(!$output = $cache->get("MarkupSitemapXML$lang", 3600)) {
+			if(!$output = $cache->get("MarkupSitemapXML$langname", 0)) {
 				$output = "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n";
 				$output .= '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">';
 				$output .= $this->sitemapListPage(wire('pages')->get("/"));
@@ -57,8 +68,9 @@ class MarkupSitemapXML extends WireData implements Module {
 			$entry .= "    <loc>{$page->httpUrl}</loc>\n";
 			$entry .= "    <lastmod>{$modified}</lastmod>\n";
 		  	$entry .= "  </url>";
-			if($page->numChildren) {
-				foreach($page->children as $child) {
+		  	$children = $page->children($this->pageselector);
+			if(count($children)) {
+				foreach($children as $child) {
 					$entry .= $this->sitemapListPage($child);
 				}
 			}
