@@ -30,7 +30,7 @@ class MarkupSitemapXML extends WireData implements Module {
 	}
 
 	public function renderSitemap($event){
-			header("HTTP/1.0 200 OK");
+			
 			$event->replace = true;
 			$lang = '';
 			if(wire("modules")->isInstalled("LanguageLocalizedURL")) {
@@ -46,6 +46,7 @@ class MarkupSitemapXML extends WireData implements Module {
 				$output .= "\n</urlset>";
 				$cache->save($output);
 			}
+			header("HTTP/1.0 200 OK");
 			header("Content-Type: text/xml");
 			$event->return = $output;
 	}
