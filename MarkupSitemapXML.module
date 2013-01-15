@@ -33,6 +33,7 @@ class MarkupSitemapXML extends WireData implements Module {
 			//$event->replace = true;
 			$lang = '';
 			$this->pageselector = '';
+			$langname = '';
 
 			// support for LanguageLocalizedURL language module
 			if(wire("modules")->isInstalled("LanguageLocalizedURL")) {
