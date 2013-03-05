@@ -23,8 +23,8 @@ class MarkupSitemapXML extends WireData implements Module {
 	 *
 	 */
 	public function init() {
-		// Intercept a request for a root URL ending in sitemap.xml and output
-		if (strpos($_SERVER['REQUEST_URI'],  '/sitemap.xml') !== FALSE) {
+		// Intercept a request for an URL ending in sitemap.xml and output
+		if (strpos($_SERVER['REQUEST_URI'], '/sitemap.xml', strlen($_SERVER['REQUEST_URI']) - strlen('/sitemap.xml')) !== FALSE) {
 			$this->addHookBefore("Page::render",$this,"renderSitemap");
 		}
 	}
