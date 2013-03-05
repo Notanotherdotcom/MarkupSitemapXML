@@ -33,12 +33,19 @@ class MarkupSitemapXML extends WireData implements Module {
 			//$event->replace = true;
 			$lang = '';
 			$this->pageselector = '';
-			$langname = '';
+			$langname = ''; // for LanguageLocalizedUrl
+			$subdomain = ''; // for Multisite
 
 			// set startpage according to request (sitemap.xml spec says that sitemap
 			// should only contain pages below it's root page in page tree)
 			$startpage = $this->sanitizer->selectorValue(dirname($_SERVER['REQUEST_URI']));
 
+			// Multisite requires minor URL-related tweak
+			if (wire("modules")->isInstalled("Multisite")) {
+				$multisite = wire("modules")->get("Multisite");
+				$startpage = "/".$multisite->subdomain.$startpage;
+			}
+			
 			// make sure that page used as root for sitemap actually exists
 			if ($this->pages->get($startpage) instanceof NullPage) return;
 
