@@ -35,6 +35,13 @@ class MarkupSitemapXML extends WireData implements Module {
 			$this->pageselector = '';
 			$langname = '';
 
+			// set startpage according to request (sitemap.xml spec says that sitemap
+			// should only contain pages below it's root page in page tree)
+			$startpage = $this->sanitizer->selectorValue(dirname($_SERVER['REQUEST_URI']));
+
+			// make sure that page used as root for sitemap actually exists
+			if ($this->pages->get($startpage) instanceof NullPage) return;
+
 			// support for LanguageLocalizedURL language module
 			if(wire("modules")->isInstalled("LanguageLocalizedURL")) {
 				$llu = wire("modules")->get("LanguageLocalizedURL");
@@ -49,11 +56,12 @@ class MarkupSitemapXML extends WireData implements Module {
 				$this->user->language = $this->languages->get($lang);
 			}
 			// Check for the cached sitemap, else generate and cache a fresh sitemap
+			$startpagestr = $this->sanitizer->pageName($startpage);
 			$cache =  wire('modules')->get("MarkupCache");
-			if(!$output = $cache->get("MarkupSitemapXML$langname", 3600)) {
+			if(!$output = $cache->get("MarkupSitemapXML$startpagestr$langname", 3600)) {
 				$output = "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n";
 				$output .= '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">';
-				$output .= $this->sitemapListPage(wire('pages')->get("/"));
+				$output .= $this->sitemapListPage(wire('pages')->get($startpage));
 				$output .= "\n</urlset>";
 				$cache->save($output);
 			}
