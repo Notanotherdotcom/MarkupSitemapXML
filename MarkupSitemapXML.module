@@ -24,7 +24,7 @@ class MarkupSitemapXML extends WireData implements Module {
 	 */
 	public function init() {
 		// Intercept a request for an URL ending in sitemap.xml and output
-		if (strpos($_SERVER['REQUEST_URI'], '/sitemap.xml', strlen($_SERVER['REQUEST_URI']) - strlen('/sitemap.xml')) !== FALSE) {
+		if (strlen($_SERVER['REQUEST_URI']) - strlen('/sitemap.xml') === strrpos($_SERVER['REQUEST_URI'], '/sitemap.xml')) {
 			$this->addHookBefore("ProcessPageView::pageNotFound",$this,"renderSitemap");
 		}
 	}
@@ -43,7 +43,9 @@ class MarkupSitemapXML extends WireData implements Module {
 			// Multisite requires minor URL-related tweak
 			if (wire("modules")->isInstalled("Multisite")) {
 				$multisite = wire("modules")->get("Multisite");
-				$startpage = "/".$multisite->subdomain.$startpage;
+				if ($multisite->subdomain) {
+					$startpage = "/".$multisite->subdomain.$startpage;
+				}
 			}
 			
 			// make sure that page used as root for sitemap actually exists
