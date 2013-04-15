@@ -24,7 +24,7 @@ class MarkupSitemapXML extends WireData implements Module {
 	 */
 	public function init() {
 		// Intercept a request for an URL ending in sitemap.xml and output
-		if (strlen($_SERVER['REQUEST_URI']) - strlen('/sitemap.xml') === strrpos($_SERVER['REQUEST_URI'], '/sitemap.xml')) {
+		if (isset($_SERVER['REQUEST_URI']) && strlen($_SERVER['REQUEST_URI']) - strlen('/sitemap.xml') === strrpos($_SERVER['REQUEST_URI'], '/sitemap.xml')) {
 			$this->addHookBefore("ProcessPageView::pageNotFound",$this,"renderSitemap");
 		}
 	}
