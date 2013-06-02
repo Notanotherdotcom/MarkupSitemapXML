@@ -23,9 +23,9 @@ class MarkupSitemapXML extends WireData implements Module {
 	 *
 	 */
 	public function init() {
-		// Intercept a request for a root URL ending in sitemap.xml and output
-		if (strpos($_SERVER['REQUEST_URI'],  '/sitemap.xml') !== FALSE) {
-			$this->addHookBefore("Page::render",$this,"renderSitemap");
+		// Intercept a request for an URL ending in sitemap.xml and output
+		if (isset($_SERVER['REQUEST_URI']) && strlen($_SERVER['REQUEST_URI']) - strlen('/sitemap.xml') === strrpos($_SERVER['REQUEST_URI'], '/sitemap.xml')) {
+			$this->addHookBefore("ProcessPageView::pageNotFound",$this,"renderSitemap");
 		}
 	}
 
@@ -33,7 +33,23 @@ class MarkupSitemapXML extends WireData implements Module {
 			//$event->replace = true;
 			$lang = '';
 			$this->pageselector = '';
-			$langname = '';
+			$langname = ''; // for LanguageLocalizedUrl
+			$subdomain = ''; // for Multisite
+
+			// set startpage according to request (sitemap.xml spec says that sitemap
+			// should only contain pages below it's root page in page tree)
+			$startpage = $this->sanitizer->selectorValue(dirname($_SERVER['REQUEST_URI']));
+
+			// Multisite requires minor URL-related tweak
+			if (wire("modules")->isInstalled("Multisite")) {
+				$multisite = wire("modules")->get("Multisite");
+				if ($multisite->subdomain) {
+					$startpage = "/".$multisite->subdomain.$startpage;
+				}
+			}
+			
+			// make sure that page used as root for sitemap actually exists
+			if ($this->pages->get($startpage) instanceof NullPage) return;
 
 			// support for LanguageLocalizedURL language module
 			if(wire("modules")->isInstalled("LanguageLocalizedURL")) {
@@ -49,11 +65,12 @@ class MarkupSitemapXML extends WireData implements Module {
 				$this->user->language = $this->languages->get($lang);
 			}
 			// Check for the cached sitemap, else generate and cache a fresh sitemap
+			$startpagestr = $this->sanitizer->pageName($startpage);
 			$cache =  wire('modules')->get("MarkupCache");
-			if(!$output = $cache->get("MarkupSitemapXML$langname", 3600)) {
+			if(!$output = $cache->get("MarkupSitemapXML$startpagestr$langname", 3600)) {
 				$output = "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n";
 				$output .= '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">';
-				$output .= $this->sitemapListPage(wire('pages')->get("/"));
+				$output .= $this->sitemapListPage(wire('pages')->get($startpage));
 				$output .= "\n</urlset>";
 				$cache->save($output);
 			}
