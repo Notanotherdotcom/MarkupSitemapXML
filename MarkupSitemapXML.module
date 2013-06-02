@@ -11,7 +11,7 @@ class MarkupSitemapXML extends WireData implements Module {
 			'title' => 'Markup Sitemap XML',
 			'summary' => 'Generates an XML sitemap at yoursite.com/sitemap.xml for use with Google Webmaster Tools etc.',
 			'href' => 'http://processwire.com/talk/index.php/topic,867.0.html',
-			'version' => 107,
+			'version' => 108,
 			'permanent' => false,
 			'autoload' => true,
 			'singular' => true,
