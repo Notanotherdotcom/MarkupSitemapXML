@@ -11,7 +11,7 @@ class MarkupSitemapXML extends WireData implements Module {
 			'title' => 'Markup Sitemap XML',
 			'summary' => 'Generates an XML sitemap at yoursite.com/sitemap.xml for use with Google Webmaster Tools etc.',
 			'href' => 'http://processwire.com/talk/index.php/topic,867.0.html',
-			'version' => 108,
+			'version' => 109,
 			'permanent' => false,
 			'autoload' => true,
 			'singular' => true,
@@ -38,7 +38,7 @@ class MarkupSitemapXML extends WireData implements Module {
 
 			// set startpage according to request (sitemap.xml spec says that sitemap
 			// should only contain pages below it's root page in page tree)
-			$startpage = $this->sanitizer->selectorValue(dirname($_SERVER['REQUEST_URI']));
+			$startpage = $this->sanitizer->path(dirname($_SERVER['REQUEST_URI']));
 
 			// Multisite requires minor URL-related tweak
 			if (wire("modules")->isInstalled("Multisite")) {
