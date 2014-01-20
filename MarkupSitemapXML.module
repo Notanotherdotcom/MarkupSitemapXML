@@ -11,7 +11,7 @@ class MarkupSitemapXML extends WireData implements Module {
 			'title' => 'Markup Sitemap XML',
 			'summary' => 'Generates an XML sitemap at yoursite.com/sitemap.xml for use with Google Webmaster Tools etc.',
 			'href' => 'http://processwire.com/talk/index.php/topic,867.0.html',
-			'version' => 109,
+			'version' => 110,
 			'permanent' => false,
 			'autoload' => true,
 			'singular' => true,
@@ -38,7 +38,8 @@ class MarkupSitemapXML extends WireData implements Module {
 
 			// set startpage according to request (sitemap.xml spec says that sitemap
 			// should only contain pages below it's root page in page tree)
-			$startpage = $this->sanitizer->path(dirname($_SERVER['REQUEST_URI']));
+			// Fix #11 by FlipZoomMedia | David Karich
+			$startpage = str_ireplace(trim(wire('config')->urls->root, '/'), '', $this->sanitizer->path(dirname($_SERVER['REQUEST_URI'])));
 
 			// Multisite requires minor URL-related tweak
 			if (wire("modules")->isInstalled("Multisite")) {
@@ -87,11 +88,12 @@ class MarkupSitemapXML extends WireData implements Module {
 			$entry .= "    <loc>{$page->httpUrl}</loc>\n";
 			$entry .= "    <lastmod>{$modified}</lastmod>\n";
 			$entry .= "  </url>";
-			$children = $page->children($this->pageselector);
-			if(count($children)) {
-				foreach($children as $child) {
-					$entry .= $this->sitemapListPage($child);
-				}
+		}
+		// Fix #12 by FlipZoomMedia | David Karich
+		$children = $page->children($this->pageselector);
+		if(count($children)) {
+			foreach($children as $child) {
+				$entry .= $this->sitemapListPage($child);
 			}
 		}
 		return $entry;
