@@ -26,11 +26,11 @@ Designed for use with [ProcessWire](http://processwire.com) version 2.5
 
 The module also adds a field called **sitemap_ignore** to exclude specific pages on a per-page basis. Again, this assumes that you wish to ignore that page's children as well.
 
-![sitemap_ignore](https://github.com/justonestep/processwire-fieldtypeimageextra/blob/feature/global-sitemap_ignore/screens/settings.png)
+![sitemap_ignore](https://github.com/justonestep/processwire-markupsitemapxml/blob/feature/global-sitemap_ignore/screens/settings.png)
 
 The sitemap is accessible at yoursite.com/sitemap.xml.
 
-![sitemap.xml](https://github.com/justonestep/processwire-fieldtypeimageextra/blob/feature/global-sitemap_ignore/screens/sitemap.png)
+![sitemap.xml](https://github.com/justonestep/processwire-markupsitemapxml/blob/feature/global-sitemap_ignore/screens/sitemap.png)
 
 ## What is left to do
 
