@@ -1,6 +1,6 @@
 <?php
 
-class MarkupSitemapXML extends WireData implements Module {
+class MarkupSitemapXML extends WireData implements Module, ConfigurableModule {
 
 	/**
 	 * Provide information about this module to ProcessWire
@@ -19,6 +19,46 @@ class MarkupSitemapXML extends WireData implements Module {
 	}
 
 	/**
+	 * defaults
+	 * @var array
+	 */
+	static protected $defaults = array(
+		'pageselector' => ''
+	);
+
+	/**
+	 * MarkupSitemapXML constructor.
+	 * get default value(s)
+	 */
+	public function __construct() {
+		$this->setArray(self::$defaults);
+	}
+
+	/**
+	 * get module configurations
+	 * @param array $data
+	 * @return InputfieldWrapper
+	 */
+	public static function getModuleConfigInputfields(array $data) {
+		$inputfields = new InputfieldWrapper();
+		$data = array_merge(self::$defaults, $data);
+
+		// Page Selector
+		$f = wire('modules')->get('InputfieldText');
+		$f->attr('name', 'pageselector');
+		$f->icon = 'cogs';
+		$f->label = 'Page Selector';
+		$f->notes = 'e.g. except specified templates "template!=my-template"';
+
+		$f->attr('value', $data['pageselector']);
+		$inputfields->add($f);
+
+		// more fields...
+
+		return $inputfields;
+	}
+
+	/**
 	 * Add the hook
 	 *
 	 */
@@ -29,10 +69,13 @@ class MarkupSitemapXML extends WireData implements Module {
 		}
 	}
 
+	/**
+	 * @param HookEvent $event
+	 */
 	public function renderSitemap(HookEvent $event){
 			//$event->replace = true;
 			$lang = '';
-			$this->pageselector = '';
+			$this->pageselector = trim($this->data['pageselector']);
 			$langname = ''; // for LanguageLocalizedUrl
 			$subdomain = ''; // for Multisite
 
@@ -48,7 +91,7 @@ class MarkupSitemapXML extends WireData implements Module {
 					$startpage = "/".$multisite->subdomain.$startpage;
 				}
 			}
-			
+
 			// make sure that page used as root for sitemap actually exists
 			if ($this->pages->get($startpage) instanceof NullPage) return;
 
@@ -61,7 +104,7 @@ class MarkupSitemapXML extends WireData implements Module {
 				// get the field name for published language from the modules settings
 				$publishedfield_name = $llu->publishedPageField ? $llu->publishedPageField : 'language_published';
 				// add a selector to find children pages when generating sitemap list
-				$this->pageselector = "$publishedfield_name=$langpage->id";
+				$this->pageselector = ($this->pageselector) ? "$this->pageselector,$publishedfield_name=$langpage->id" : $this->pageselector;
 				//set user language so the module will spit out language localized urls
 				$this->user->language = $this->languages->get($lang);
 			}
@@ -80,6 +123,11 @@ class MarkupSitemapXML extends WireData implements Module {
 			exit();
 	}
 
+	/**
+	 * list pages recursive
+	 * @param $page
+	 * @return string
+	 */
 	public function sitemapListPage($page) {
 		$entry = "";
 		if ($page->viewable() && ($page->sitemap_ignore == 0 || $page->path == '/')) { // $page->path part added so that it ignores hiding the homepage, else you wouldn't have ANY pages returned
